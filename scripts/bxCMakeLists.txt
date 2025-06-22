@@ -1,0 +1,34 @@
+cmake_minimum_required(VERSION 3.20)
+project(bx)
+
+file(GLOB BX_SOURCES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/bx/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/bx/inline/*.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+)
+
+list(REMOVE_ITEM BX_SOURCES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/amalgamated.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/crtnone.cpp
+)
+
+add_library(${PROJECT_NAME} STATIC ${BX_SOURCES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty
+)
+
+add_compile_definitions(__STDC_FORMAT_MACROS)
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC BX_CONFIG_DEBUG)
+
+if(MSVC)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/compat/msvc)
+endif()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)

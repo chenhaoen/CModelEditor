@@ -1,0 +1,32 @@
+cmake_minimum_required(VERSION 3.20)
+project(bimg)
+
+file(GLOB BIMG_SOURCES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/bimg/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/image.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/image_gnf.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/astc-codec/src/decoder/*.cc
+)
+
+add_library(${PROJECT_NAME} STATIC ${BIMG_SOURCES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/astc-codec
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/astc-codec/include
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    bx
+)
+
+if(MSVC)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/compat/msvc)
+endif()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
