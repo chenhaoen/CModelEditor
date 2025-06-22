@@ -18,6 +18,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/dxsdk/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/khronos
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/directx
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
