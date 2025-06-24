@@ -21,6 +21,7 @@ bgfx
 ${Qt6Core_LIBRARIES}
 ${Qt6Gui_LIBRARIES}
 ${Qt6Widgets_LIBRARIES}
+Qt6::GuiPrivate
 )
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

@@ -15,10 +15,15 @@ add_library(${PROJECT_NAME} STATIC ${BGFX_SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/dxsdk/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/khronos
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/directx
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/wsl/stubs
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/wsl
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 

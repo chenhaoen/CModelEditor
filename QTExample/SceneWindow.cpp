@@ -1,5 +1,6 @@
 #include <QTimer>
 #include <QResizeEvent>
+#include <qpa/qplatformnativeinterface.h>
 
 #include <stdio.h>
 #include <bx/bx.h>
@@ -37,8 +38,9 @@ void SceneWindow::exposeEvent(QExposeEvent*)
 			// Initialize bgfx using the native window handle and window resolution.
 			bgfx::Init init;
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-			init.platformData.ndt = glfwGetX11Display();
-			init.platformData.nwh = (void*)(uintptr_t)glfwGetX11Window(window);
+			QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
+			init.platformData.ndt = static_cast<Display*>(native->nativeResourceForWindow("display", nullptr));
+			init.platformData.nwh = reinterpret_cast<void*>(winId());
 #elif BX_PLATFORM_OSX
 			init.platformData.nwh = reinterpret_cast<void*>(winId());
 #elif BX_PLATFORM_WINDOWS
