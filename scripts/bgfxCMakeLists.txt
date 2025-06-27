@@ -22,9 +22,16 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/dxsdk/include
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/khronos
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/directx
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/wsl/stubs
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/wsl
+    #${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/wsl/stubs
+    #${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/wsl
 )
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_include_directories(${PROJECT_NAME} PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/wsl/stubs
+        ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/directx-headers/include/wsl
+    )
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     bx
