@@ -1,13 +1,13 @@
 
-[submodule "3rd/bimg"]
-	path = 3rd/bimg
-	url = https://github.com/bkaradzic/bimg
-[submodule "3rd/bx"]
-	path = 3rd/bx
-	url = https://github.com/bkaradzic/bx
-[submodule "3rd/bgfx"]
-	path = 3rd/bgfx
-	url = https://github.com/bkaradzic/bgfx
 [submodule "3rd/glfw"]
 	path = 3rd/glfw
 	url = https://github.com/glfw/glfw
+[submodule "3rd/DiligentCore"]
+	path = 3rd/DiligentCore
+	url = https://github.com/DiligentGraphics/DiligentCore.git
+[submodule "3rd/DiligentTools"]
+	path = 3rd/DiligentTools
+	url = https://github.com/DiligentGraphics/DiligentTools.git
+[submodule "3rd/DiligentFX"]
+	path = 3rd/DiligentFX
+	url = https://github.com/DiligentGraphics/DiligentFX.git
