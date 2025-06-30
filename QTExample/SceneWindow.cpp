@@ -3,24 +3,45 @@
 #include <qpa/qplatformnativeinterface.h>
 #include <QApplication>
 
-#include <stdio.h>
-
-#include <bx/bx.h>
-#include <bx/math.h>
-#include <bx/pixelformat.h>
-
-#include <bgfx/bgfx.h>
-#include <bgfx/platform.h>
-#if BX_PLATFORM_LINUX
-#define GLFW_EXPOSE_NATIVE_X11
-#elif BX_PLATFORM_WINDOWS
-#define GLFW_EXPOSE_NATIVE_WIN32
-#elif BX_PLATFORM_OSX
-#define GLFW_EXPOSE_NATIVE_COCOA
-#endif
-#include "logo.h"
-
 #include "SceneWindow.h"
+
+#if VULKAN_SUPPORTED
+#include <EngineFactoryVk.h>
+#endif
+
+static const char* VSSource = R"(
+
+layout(location = 0) out vec3 fragColor;
+
+vec2 positions[3] = vec2[](
+    vec2(0.0, -0.5),
+    vec2(0.5, 0.5),
+    vec2(-0.5, 0.5)
+);
+
+vec3 colors[3] = vec3[](
+    vec3(1.0, 0.0, 0.0),
+    vec3(0.0, 1.0, 0.0),
+    vec3(0.0, 0.0, 1.0)
+);
+
+void main() {
+    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
+    fragColor = colors[gl_VertexIndex];
+}
+)";
+
+// Pixel shader simply outputs interpolated vertex color
+static const char* PSSource = R"(
+
+layout(location = 0) in vec3 fragColor;
+
+layout(location = 0) out vec4 outColor;
+
+void main() {
+    outColor = vec4(fragColor, 1.0);
+}
+)";
 
 SceneWindow::SceneWindow()
 {
@@ -31,45 +52,81 @@ SceneWindow::SceneWindow()
 	timer->start(1/60.0f);
 }
 
-const bgfx::ViewId kClearView = 0;
-
 void SceneWindow::exposeEvent(QExposeEvent*)
 {
 	if (isExposed()) {
 		if (!m_initialized) {
 			m_initialized = true;
 
-			bgfx::renderFrame();
-			// Initialize bgfx using the native window handle and window resolution.
-			bgfx::Init init;
-#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-			QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
-			init.platformData.ndt = static_cast<Display*>(native->nativeResourceForWindow("display", nullptr));
-			init.platformData.nwh = reinterpret_cast<void*>(winId());
-#elif BX_PLATFORM_OSX
-			init.platformData.nwh = reinterpret_cast<void*>(winId());
-#elif BX_PLATFORM_WINDOWS
-			init.platformData.nwh = reinterpret_cast<void*>(winId());
+            Diligent::Win32NativeWindow Window{(void*)winId()};
+
+            Diligent::SwapChainDesc SCDesc;
+
+# if EXPLICITLY_LOAD_ENGINE_VK_DLL
+            // Load the dll and import GetEngineFactoryD3D12() function
+            Diligent::GetEngineFactoryVkType GetEngineFactoryVk = Diligent::LoadGraphicsEngineVk();
+            Diligent::IEngineFactoryVk* pFactoryVk = GetEngineFactoryVk();
+#else
+            Diligent::IEngineFactoryVk* pFactoryVk = Diligent::GetEngineFactoryVk();
 #endif
-			int width = this->width();
-			int height = this->height();
+            Diligent::EngineVkCreateInfo EngineCI;
+            pFactoryVk->CreateDeviceAndContextsVk(EngineCI, &m_pDevice, &m_pImmediateContext);
+            pFactoryVk->CreateSwapChainVk(m_pDevice, m_pImmediateContext, SCDesc, Window, &m_pSwapChain);
 
-			qreal scaleFactor = QApplication::primaryScreen()->devicePixelRatio();
+            Diligent::GraphicsPipelineStateCreateInfo PSOCreateInfo;
 
-			init.resolution.width = (uint32_t)width * scaleFactor;
-			init.resolution.height = (uint32_t)height * scaleFactor;
+            // Pipeline state name is used by the engine to report issues.
+            // It is always a good idea to give objects descriptive names.
+            PSOCreateInfo.PSODesc.Name = "Simple triangle PSO";
 
-			init.resolution.reset = BGFX_RESET_VSYNC;
-			init.type = bgfx::RendererType::Vulkan;
-			bgfx::init(init);
+            // This is a graphics pipeline
+            PSOCreateInfo.PSODesc.PipelineType = Diligent::PIPELINE_TYPE_GRAPHICS;
 
-			bx::Vec3 color(0.2, 0.2, 0.2);
-			uint32_t colorRGB8 = 0
-				| uint32_t(bx::toUnorm(color.x, 255.0f) ) << 24
-				| uint32_t(bx::toUnorm(color.y, 255.0f) ) << 16
-				| uint32_t(bx::toUnorm(color.z, 255.0f) ) <<  8;
-			bgfx::setViewClear(kClearView, BGFX_CLEAR_COLOR, colorRGB8 );
-			bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
+            // clang-format off
+            // This tutorial will render to a single render target
+            PSOCreateInfo.GraphicsPipeline.NumRenderTargets = 1;
+            // Set render target format which is the format of the swap chain's color buffer
+            PSOCreateInfo.GraphicsPipeline.RTVFormats[0] = m_pSwapChain->GetDesc().ColorBufferFormat;
+            // Use the depth buffer format from the swap chain
+            PSOCreateInfo.GraphicsPipeline.DSVFormat = m_pSwapChain->GetDesc().DepthBufferFormat;
+            // Primitive topology defines what kind of primitives will be rendered by this pipeline state
+            PSOCreateInfo.GraphicsPipeline.PrimitiveTopology = Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            // No back face culling for this tutorial
+            PSOCreateInfo.GraphicsPipeline.RasterizerDesc.CullMode = Diligent::CULL_MODE_NONE;
+            // Disable depth testing
+            PSOCreateInfo.GraphicsPipeline.DepthStencilDesc.DepthEnable = false;
+            // clang-format on
+
+            Diligent::ShaderCreateInfo ShaderCI;
+            // Tell the system that the shader source code is in HLSL.
+            // For OpenGL, the engine will convert this into GLSL under the hood.
+            ShaderCI.SourceLanguage = Diligent::SHADER_SOURCE_LANGUAGE_GLSL;
+            // OpenGL backend requires emulated combined HLSL texture samplers (g_Texture + g_Texture_sampler combination)
+            ShaderCI.Desc.UseCombinedTextureSamplers = true;
+            // Create a vertex shader
+            Diligent::RefCntAutoPtr<Diligent::IShader> pVS;
+            {
+                ShaderCI.Desc.ShaderType = Diligent::SHADER_TYPE_VERTEX;
+                ShaderCI.EntryPoint = "main";
+                ShaderCI.Desc.Name = "Triangle vertex shader";
+                ShaderCI.Source = VSSource;
+                m_pDevice->CreateShader(ShaderCI, &pVS);
+            }
+
+            // Create a pixel shader
+            Diligent::RefCntAutoPtr<Diligent::IShader> pPS;
+            {
+                ShaderCI.Desc.ShaderType = Diligent::SHADER_TYPE_PIXEL;
+                ShaderCI.EntryPoint = "main";
+                ShaderCI.Desc.Name = "Triangle pixel shader";
+                ShaderCI.Source = PSSource;
+                m_pDevice->CreateShader(ShaderCI, &pPS);
+            }
+
+            // Finally, create the pipeline state
+            PSOCreateInfo.pVS = pVS;
+            PSOCreateInfo.pPS = pPS;
+            m_pDevice->CreateGraphicsPipelineState(PSOCreateInfo, &m_pPSO);
 		}
 	}
 }
@@ -85,9 +142,6 @@ void SceneWindow::resizeEvent(QResizeEvent* event)
 		return;
 	}
 
-	qreal scaleFactor = QApplication::primaryScreen()->devicePixelRatio();
-	bgfx::reset((uint32_t)event->size().width() * scaleFactor, (uint32_t)event->size().height() * scaleFactor, BGFX_RESET_VSYNC);
-	bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
 }
 
 void SceneWindow::closeEvent(QCloseEvent*)
@@ -111,8 +165,6 @@ void SceneWindow::mouseMoveEvent(QMouseEvent* event)
 
 }
 
-
-
 void SceneWindow::mousePressEvent(QMouseEvent* event)
 {
 
@@ -126,22 +178,29 @@ bool SceneWindow::event(QEvent* event)
 {
 	if (event->type() == QEvent::UpdateRequest)
 	{
-		// This dummy draw call is here to make sure that view 0 is cleared if no other draw calls are submitted to view 0.
-		bgfx::touch(kClearView);
-		// Use debug font to print information about this example.
-		bgfx::dbgTextClear();
-		bgfx::dbgTextImage(bx::max<uint16_t>(uint16_t(this->width() / 2 / 8), 20) - 20, bx::max<uint16_t>(uint16_t(this->height() / 2 / 16), 6) - 6, 40, 12, s_logo, 160);
-		bgfx::dbgTextPrintf(0, 0, 0x0f, "Press F1 to toggle stats.");
-		bgfx::dbgTextPrintf(0, 1, 0x0f, "Color can be changed with ANSI \x1b[9;me\x1b[10;ms\x1b[11;mc\x1b[12;ma\x1b[13;mp\x1b[14;me\x1b[0m code too.");
-		bgfx::dbgTextPrintf(80, 1, 0x0f, "\x1b[;0m    \x1b[;1m    \x1b[; 2m    \x1b[; 3m    \x1b[; 4m    \x1b[; 5m    \x1b[; 6m    \x1b[; 7m    \x1b[0m");
-		bgfx::dbgTextPrintf(80, 2, 0x0f, "\x1b[;8m    \x1b[;9m    \x1b[;10m    \x1b[;11m    \x1b[;12m    \x1b[;13m    \x1b[;14m    \x1b[;15m    \x1b[0m");
-		const bgfx::Stats* stats = bgfx::getStats();
-		bgfx::dbgTextPrintf(0, 2, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters.", stats->width, stats->height, stats->textWidth, stats->textHeight);
-		// Enable stats or debug text.
-		// Advance to next frame. Process submitted rendering primitives.
-		bgfx::setDebug(false ? BGFX_DEBUG_STATS : BGFX_DEBUG_TEXT);
-		bgfx::frame();
+        m_pImmediateContext->ClearStats();
 
+        Diligent::ITextureView* pRTV = m_pSwapChain->GetCurrentBackBufferRTV();
+        Diligent::ITextureView* pDSV = m_pSwapChain->GetDepthBufferDSV();
+        m_pImmediateContext->SetRenderTargets(1, &pRTV, pDSV, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+        const float ClearColor[] = { 0.350f, 0.350f, 0.350f, 1.0f };
+        // Let the engine perform required state transitions
+        m_pImmediateContext->ClearRenderTarget(pRTV, ClearColor, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+        m_pImmediateContext->ClearDepthStencil(pDSV, Diligent::CLEAR_DEPTH_FLAG, 1.f, 0, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+        // Set the pipeline state in the immediate context
+        m_pImmediateContext->SetPipelineState(m_pPSO);
+
+        // Typically we should now call CommitShaderResources(), however shaders in this example don't
+        // use any resources.
+
+        Diligent::DrawAttribs drawAttrs;
+        drawAttrs.NumVertices = 3; // We will render 3 vertices
+        m_pImmediateContext->Draw(drawAttrs);
+
+        m_pImmediateContext->Flush();
+        m_pSwapChain->Present();
 		return true;
 	}
 

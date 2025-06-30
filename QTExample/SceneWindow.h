@@ -2,6 +2,12 @@
 
 #include <QWindow>
 
+#include <RefCntAutoPtr.hpp>
+#include <RenderDevice.h>
+#include <DeviceContext.h>
+#include <SwapChain.h>
+#include <BasicMath.hpp>
+
 class SceneWindow : public QWindow
 {
 public:
@@ -27,4 +33,9 @@ protected:
 
 private:
 	bool m_initialized = false;
+
+	Diligent::RefCntAutoPtr<Diligent::IRenderDevice>  m_pDevice;
+	Diligent::RefCntAutoPtr<Diligent::IDeviceContext> m_pImmediateContext;
+	Diligent::RefCntAutoPtr<Diligent::ISwapChain>     m_pSwapChain;
+	Diligent::RefCntAutoPtr<Diligent::IPipelineState> m_pPSO;
 };
