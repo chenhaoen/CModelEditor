@@ -80,7 +80,18 @@ int main(int argc, char** argv)
 		return 1;
 	glfwSetKeyCallback(window, glfw_keyCallback);
 
+#if PLATFORM_WIN32
 	Diligent::Win32NativeWindow Window{ glfwGetWin32Window(window) };
+#endif
+
+#if PLATFORM_LINUX
+    LinuxNativeWindow Window;
+    Window.WindowId = glfwGetX11Window(m_Window);
+    Window.pDisplay = glfwGetX11Display();
+    if (DevType == RENDER_DEVICE_TYPE_GL)
+        glfwMakeContextCurrent(m_Window);
+#endif
+
 
 	Diligent::SwapChainDesc SCDesc;
 
