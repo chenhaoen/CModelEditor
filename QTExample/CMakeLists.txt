@@ -16,12 +16,11 @@ SceneWindow.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} 
-bx
-bgfx
 ${Qt6Core_LIBRARIES}
 ${Qt6Gui_LIBRARIES}
 ${Qt6Widgets_LIBRARIES}
 Qt6::GuiPrivate
+Core
 )
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

@@ -1,9 +1,14 @@
 #include <QTimer>
 #include <QResizeEvent>
 #include <qpa/qplatformnativeinterface.h>
+#include <QApplication>
 
 #include <stdio.h>
+
 #include <bx/bx.h>
+#include <bx/math.h>
+#include <bx/pixelformat.h>
+
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
 #if BX_PLATFORM_LINUX
@@ -48,12 +53,22 @@ void SceneWindow::exposeEvent(QExposeEvent*)
 #endif
 			int width = this->width();
 			int height = this->height();
-			init.resolution.width = (uint32_t)width;
-			init.resolution.height = (uint32_t)height;
+
+			qreal scaleFactor = QApplication::primaryScreen()->devicePixelRatio();
+
+			init.resolution.width = (uint32_t)width * scaleFactor;
+			init.resolution.height = (uint32_t)height * scaleFactor;
+
 			init.resolution.reset = BGFX_RESET_VSYNC;
+			init.type = bgfx::RendererType::Vulkan;
 			bgfx::init(init);
 
-			bgfx::setViewClear(kClearView, BGFX_CLEAR_COLOR);
+			bx::Vec3 color(0.2, 0.2, 0.2);
+			uint32_t colorRGB8 = 0
+				| uint32_t(bx::toUnorm(color.x, 255.0f) ) << 24
+				| uint32_t(bx::toUnorm(color.y, 255.0f) ) << 16
+				| uint32_t(bx::toUnorm(color.z, 255.0f) ) <<  8;
+			bgfx::setViewClear(kClearView, BGFX_CLEAR_COLOR, colorRGB8 );
 			bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
 		}
 	}
@@ -70,7 +85,8 @@ void SceneWindow::resizeEvent(QResizeEvent* event)
 		return;
 	}
 
-	bgfx::reset((uint32_t)event->size().width(), (uint32_t)event->size().height(), BGFX_RESET_VSYNC);
+	qreal scaleFactor = QApplication::primaryScreen()->devicePixelRatio();
+	bgfx::reset((uint32_t)event->size().width() * scaleFactor, (uint32_t)event->size().height() * scaleFactor, BGFX_RESET_VSYNC);
 	bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
 }
 
