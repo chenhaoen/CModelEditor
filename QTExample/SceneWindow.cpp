@@ -63,14 +63,12 @@ void SceneWindow::exposeEvent(QExposeEvent*)
 #endif
 
 #if PLATFORM_LINUX
-    LinuxNativeWindow Window;
-    Window.WindowId = (void*)winId();
+    Diligent::LinuxNativeWindow Window;
+    Window.WindowId = (uint32_t)(winId());
 
     QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
     Display* display = static_cast<Display*>(native->nativeResourceForWindow("display", nullptr));
     Window.pDisplay = display;
-    if (DevType == RENDER_DEVICE_TYPE_GL)
-        glfwMakeContextCurrent(m_Window);
 #endif
 
             Diligent::SwapChainDesc SCDesc;

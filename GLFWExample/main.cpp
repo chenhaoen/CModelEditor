@@ -8,8 +8,7 @@
 #    define GLFW_EXPOSE_NATIVE_X11 1
 #endif
 
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
+
 
 #if VULKAN_SUPPORTED
 #include <EngineFactoryVk.h>
@@ -20,6 +19,9 @@
 #include <DeviceContext.h>
 #include <SwapChain.h>
 #include <BasicMath.hpp>
+
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 static const char* VSSource = R"(
 
@@ -85,11 +87,9 @@ int main(int argc, char** argv)
 #endif
 
 #if PLATFORM_LINUX
-    LinuxNativeWindow Window;
-    Window.WindowId = glfwGetX11Window(m_Window);
+    Diligent::LinuxNativeWindow Window;
+    Window.WindowId = glfwGetX11Window(window);
     Window.pDisplay = glfwGetX11Display();
-    if (DevType == RENDER_DEVICE_TYPE_GL)
-        glfwMakeContextCurrent(m_Window);
 #endif
 
 

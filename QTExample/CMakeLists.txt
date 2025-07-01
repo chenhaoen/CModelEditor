@@ -27,7 +27,9 @@ Diligent-GraphicsTools
 Diligent-BuildSettings
 )
 
+if(WIN32)
 copy_required_dlls(${PROJECT_NAME})
+endif()
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
