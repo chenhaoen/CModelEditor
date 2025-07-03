@@ -8,6 +8,8 @@
 #include <SwapChain.h>
 #include <BasicMath.hpp>
 
+#include "Scene/Camera.h"
+
 class SceneWindow : public QWindow
 {
 public:
@@ -29,8 +31,12 @@ protected:
 
 	bool event(QEvent* event) override;
 
-	void render();
+private:
+	void CreatePipelineState();
+	void CreateVertexBuffer();
+	void CreateIndexBuffer();
 
+	void render();
 private:
 	bool m_initialized = false;
 
@@ -38,4 +44,11 @@ private:
 	Diligent::RefCntAutoPtr<Diligent::IDeviceContext> m_pImmediateContext;
 	Diligent::RefCntAutoPtr<Diligent::ISwapChain>     m_pSwapChain;
 	Diligent::RefCntAutoPtr<Diligent::IPipelineState> m_pPSO;
+	Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> m_pSRB;
+
+	Diligent::RefCntAutoPtr<Diligent::IBuffer>                m_CubeVertexBuffer;
+	Diligent::RefCntAutoPtr<Diligent::IBuffer>                m_CubeIndexBuffer;
+	Diligent::RefCntAutoPtr<Diligent::IBuffer>                m_VSConstants;
+
+	Camera m_camera;
 };

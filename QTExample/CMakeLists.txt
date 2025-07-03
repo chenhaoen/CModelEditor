@@ -25,13 +25,25 @@ Diligent-GraphicsEngineVk-shared
 Diligent-Common
 Diligent-GraphicsTools
 Diligent-BuildSettings
+Core
 )
 
 if(WIN32)
 copy_required_dlls(${PROJECT_NAME})
 endif()
 
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+if(MSVC)
+set(BIN_DIR  ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+else()
+set(BIN_DIR  ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/resources
+        ${BIN_DIR}/resources
+)
 
 install(CODE "
     include(BundleUtilities)
