@@ -1,5 +1,5 @@
-#include "MainWindow.h"
-#include "SceneWindow.h"
+#include "QT/MainWindow.h"
+#include "QT/SceneWindow.h"
 
 #include "ui_MainWindow.h"
 

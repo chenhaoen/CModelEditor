@@ -5,7 +5,7 @@
 
 #include <fstream>
 
-#include "SceneWindow.h"
+#include "QT/SceneWindow.h"
 #include "CFileSystem.h"
 
 #include <MapHelper.hpp>
