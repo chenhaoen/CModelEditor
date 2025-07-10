@@ -6,7 +6,7 @@
 #include <fstream>
 
 #include "QT/SceneWindow.h"
-#include "CFileSystem.h"
+#include "FileSystem.h"
 
 #include <MapHelper.hpp>
 
@@ -246,7 +246,7 @@ void SceneWindow::CreatePipelineState()
     PSOCreateInfo.GraphicsPipeline.DepthStencilDesc.DepthEnable = true;
     // clang-format on
 
-    const std::string& localAppDataDirectory = CFileSystem::getAppDir();
+    const std::string& localAppDataDirectory = che::FileSystem::getAppDir();
     const std::string& vertexShaderPath = localAppDataDirectory + "/resources/shaders/ModelVS.glsl";
     const std::string& fragmentShaderPath = localAppDataDirectory +"/resources/shaders/ModelFS.glsl";
 

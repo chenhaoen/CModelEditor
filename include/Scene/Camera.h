@@ -2,9 +2,12 @@
 
 #include "Exports.h"
 
-class CORE_API Camera
+namespace che
 {
-private:
+	class CORE_API Camera
+	{
+	private:
 
-};
+	};
+}
 

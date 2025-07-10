@@ -2,11 +2,11 @@
 
 #include <QApplication>
 
-#include "CFileSystem.h"
+#include "FileSystem.h"
 
 int main(int argc, char** argv)
 {
-    CFileSystem::setAppDir(argv[0]);
+    che::FileSystem::setAppDir(argv[0]);
 
     QApplication app(argc, argv);
 

@@ -50,5 +50,5 @@ private:
 	Diligent::RefCntAutoPtr<Diligent::IBuffer>                m_CubeIndexBuffer;
 	Diligent::RefCntAutoPtr<Diligent::IBuffer>                m_VSConstants;
 
-	Camera m_camera;
+	che::Camera m_camera;
 };

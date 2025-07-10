@@ -5,10 +5,10 @@ add_library(${PROJECT_NAME} SHARED
   ${CMAKE_SOURCE_DIR}/include/Scene/Scene.h
   ${CMAKE_SOURCE_DIR}/include/Scene/Camera.h
   ${CMAKE_SOURCE_DIR}/include/pch.h
-  ${CMAKE_SOURCE_DIR}/include/CFileSystem.h
+  ${CMAKE_SOURCE_DIR}/include/FileSystem.h
   ${CMAKE_SOURCE_DIR}/src/Scene/Scene.cpp
   ${CMAKE_SOURCE_DIR}/src/Scene/Camera.cpp
-  ${CMAKE_SOURCE_DIR}/src/CFileSystem.cpp
+  ${CMAKE_SOURCE_DIR}/src/FileSystem.cpp
 )
 
 if(MSVC)
